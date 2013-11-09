@@ -3,7 +3,7 @@ module group
     implicit none
     private
 
-    public :: create_node, insert_in_tree, rotate_left, rotate_right, rebalance_tree, traverse
+    public :: create_node, insert_in_tree, rotate_left, rotate_right, rebalance_tree, traverse, display_sideways
 
   contains
 
@@ -176,5 +176,79 @@ module group
         nullify(placeholder%right)
         call insert_in_tree(placeholder)
     end subroutine create_node
+
+    recursive subroutine visit(current)
+        use node_definition
+        use global
+        type(node), pointer :: current
+        !
+        current_depth = current_depth + 1
+        if (current_depth > max_depth) then
+            max_depth = current_depth
+        end if
+        if (associated(current%left)) then
+            call visit(current%left)
+            current_depth = current_depth - 1
+        end if
+        if (associated(current%right)) then
+            call visit(current%right)
+            current_depth = current_depth - 1
+        end if
+    end subroutine visit
+
+    subroutine display_sideways
+        use node_definition
+        use global
+        type(node), pointer :: ptr
+        integer :: max_nodes, &
+                   node_no, &
+                   level, &
+                   mask, &
+                   dmask, &
+                   nlevels
+        logical :: printed
+        character(len=10) :: layout
+        !
+        current_depth = 0
+        max_depth = 0
+        call visit(root)
+        max_nodes = 2**max_depth
+        write (*,'(''max_nodes: '',i4)') max_nodes
+        do node_no = 1, max_nodes-1
+            ptr => root
+            mask = max_nodes/2
+            printed = .false.
+            do level=1,1000,1
+                if(iand(node_no,mask) /= 0) then
+                    ptr => ptr%right
+                else
+                    if ((modulo(node_no, mask) == 0) .or. (mask == 1)) then
+                        write(unit=*,fmt=*)
+                        dmask = 2*mask
+                        if (node_no /= max_nodes/2) then
+                            write(unit=layout,fmt="(a,i3,a)") "(tr",10*(level-1)+1, ",a)"
+                            if (iand(node_no,dmask) /= 0) then
+                                write(unit=*,fmt=layout,advance="no") "\"
+                            else
+                                write(unit=*,fmt=layout,advance="no") "/"
+                            end if
+                        end if
+                        write(unit=*,fmt="(i3)",advance="no") ptr%item
+                        printed = .true.
+                    end if
+                    ptr => ptr%left
+                end if
+                mask = mask / 2
+                if ((level >= max_depth) .or. (.not. associated(ptr)) .or. printed) then
+                    exit
+                end if
+            end do
+            if (.not. printed) then
+                do nlevels = level, max_depth
+                    print *
+                end do
+            end if
+        end do
+    end subroutine display_sideways
 
 end module group

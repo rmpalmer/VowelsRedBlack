@@ -5,7 +5,8 @@ module global
 
     logical, parameter :: red = .true., black = .false.
     type(node), pointer :: root, placeholder
+    integer :: current_depth, max_depth
 
-    public :: red, black, root, placeholder
+    public :: red, black, root, placeholder, current_depth, max_depth
 
 end module global
